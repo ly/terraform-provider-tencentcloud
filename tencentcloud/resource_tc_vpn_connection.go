@@ -32,6 +32,10 @@ resource "tencentcloud_vpn_connection" "foo" {
   tags = {
     test = "testt"
   }
+
+  enable_health_check = true
+  health_check_local_ip = "172.16.0.254"
+  health_check_remote_ip = "2.2.2.60"
 }
 ```
 
@@ -249,6 +253,21 @@ func resourceTencentCloudVpnConnection() *schema.Resource {
 				Optional:    true,
 				Description: "A list of tags used to associate different resources.",
 			},
+			"enable_health_check": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "whether health_check is enabled",
+			},
+			"health_check_local_ip": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "Local address of healthcheck",
+			},
+			"health_check_remote_ip": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "remote address of healthcheck",
+			},
 			"create_time": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -394,6 +413,11 @@ func resourceTencentCloudVpnConnectionCreate(d *schema.ResourceData, meta interf
 	ipsecSaLifetimeTraffic64 := uint64(ipsecSaLifetimeTraffic)
 	ipsecOptionsSpecification.IPSECSaLifetimeTraffic = &ipsecSaLifetimeTraffic64
 	request.IPSECOptionsSpecification = &ipsecOptionsSpecification
+
+    // set up healthcheck
+	request.EnableHealthCheck = helper.Bool(d.Get("enable_health_check").(bool))
+	request.HealthCheckLocalIp = helper.String(d.Get("health_check_local_ip").(string))
+	request.HealthCheckRemoteIp = helper.String(d.Get("health_check_remote_ip").(string))
 
 	var response *vpc.CreateVpnConnectionResponse
 	err = resource.Retry(readRetryTimeout, func() *resource.RetryError {
@@ -602,6 +626,11 @@ func resourceTencentCloudVpnConnectionRead(d *schema.ResourceData, meta interfac
 	_ = d.Set("ipsec_sa_lifetime_seconds", int(*connection.IPSECOptionsSpecification.IPSECSaLifetimeSeconds))
 	_ = d.Set("ipsec_pfs_dh_group", *connection.IPSECOptionsSpecification.PfsDhGroup)
 	_ = d.Set("ipsec_sa_lifetime_traffic", int(*connection.IPSECOptionsSpecification.IPSECSaLifetimeTraffic))
+    
+    //set up healthcheck
+	_ = d.Set("enable_health_check", bool(*connection.EnableHealthCheck))
+	_ = d.Set("health_check_local_ip", *connection.HealthCheckLocalIp)
+	_ = d.Set("health_check_remote_ip", *connection.HealthCheckRemoteIp)
 
 	//to be add
 	_ = d.Set("state", *connection.State)
@@ -792,6 +821,18 @@ func resourceTencentCloudVpnConnectionUpdate(d *schema.ResourceData, meta interf
 			d.SetPartial(key)
 		}
 	}
+
+    // healthcheck
+	if d.HasChange("enable_health_check") {
+		d.SetPartial("enable_health_check")
+	}
+	if d.HasChange("health_check_local_ip") {
+		d.SetPartial("health_check_local_ip")
+	}
+	if d.HasChange("health_check_remote_ip") {
+		d.SetPartial("health_check_remote_ip")
+	}
+
 	//tag
 	if d.HasChange("tags") {
 		oldInterface, newInterface := d.GetChange("tags")
@@ -807,6 +848,7 @@ func resourceTencentCloudVpnConnectionUpdate(d *schema.ResourceData, meta interf
 		}
 		d.SetPartial("tags")
 	}
+
 	d.Partial(false)
 
 	return resourceTencentCloudVpnConnectionRead(d, meta)
