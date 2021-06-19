@@ -218,6 +218,21 @@ func dataSourceTencentCloudVpnConnections() *schema.Resource {
 							Computed:    true,
 							Description: "A list of tags used to associate different resources.",
 						},
+						"enable_health_check": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "whether health_check is enabled",
+						},
+						"health_check_local_ip": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Local address of healthcheck",
+						},
+						"health_check_remote_ip": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "remote address of healthcheck",
+						},
 						"create_time": {
 							Type:        schema.TypeString,
 							Computed:    true,
