@@ -306,6 +306,7 @@ func resourceTencentCloudVpnGatewayRead(d *schema.ResourceData, meta interface{}
 	_ = d.Set("new_purchase_plan", gateway.NewPurchasePlan)
 	_ = d.Set("restrict_state", gateway.RestrictState)
 	_ = d.Set("zone", gateway.Zone)
+	_ = d.Set("vpc_id", gateway.VpcId)
 
 	//tags
 	tagService := TagService{client: meta.(*TencentCloudClient).apiV3Conn}
